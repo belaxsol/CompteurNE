@@ -794,7 +794,7 @@ def generer_carte_partage(adherents, gain_24h, gain_7j, cap_precedent, prochain_
         "{{TOTAL}}": formater_nombre(adherents),
         "{{D24}}": f"{'+' if gain_24h >= 0 else '-'}{formater_nombre(abs(gain_24h))}",
         "{{D7}}": f"{'+' if gain_7j >= 0 else '-'}{formater_nombre(abs(gain_7j))}",
-        "{{CAP}}": formater_nombre(prochain_cap),
+        "{{CAP}}": f"De {formater_nombre(cap_precedent)} à {formater_nombre(prochain_cap)} · reste {formater_nombre(prochain_cap - adherents)}",
         "{{PCT}}": f"{int(pct)} %",
         "{{PCTN}}": f"{pct:.1f}",
     }

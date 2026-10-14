@@ -127,7 +127,7 @@
           <div class="st"><b class="g" id="d24">—</b><small>DERNIÈRES 24 H</small></div>
           <div class="st"><b class="t" id="d7">—</b><small>SUR 7 JOURS</small></div>
         </div>
-        <div class="cap"><div class="row"><span id="cap">Cap —</span><span id="pct">—</span></div><div class="bar"><i id="bar"></i></div></div>
+        <div class="cap"><div class="row"><span id="cap">—</span><span id="pct">—</span></div><div class="bar"><i id="bar"></i></div></div>
       </div>
       <div class="visual">
         <div class="hex2"></div>
@@ -239,7 +239,7 @@ async function rafraichir() {
       date: `${maj.getDate()} ${MOIS[maj.getMonth()]} ${maj.getFullYear()}`,
       d24: v24 == null ? "—" : signe(total - v24),
       d7: v7 == null ? "—" : signe(total - v7),
-      cap: `Cap ${fmt(capHaut)}`,
+      cap: `De ${fmt(capBas)} à ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
       pct: Math.floor(pct) + " %",
       pctN: pct,
     };

@@ -44,7 +44,7 @@ export async function lireDonnees() {
     date: `${+parties.day} ${MOIS[+parties.month - 1]} ${parties.year}`,
     d24: v24 == null ? "—" : signe(total - v24),
     d7: v7 == null ? "—" : signe(total - v7),
-    cap: `Cap ${fmt(capHaut)}`,
+    cap: `De ${fmt(capBas)} à ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
     pct: Math.floor(pct) + " %",
     pctN: pct,
   };
