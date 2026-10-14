@@ -42,8 +42,8 @@
   .hex, .hex2, .foot .h { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
   .hex { position: absolute; width: 520px; height: 600px; right: -10px; top: 60px; background: var(--khaki); }
   .hex2 { position: absolute; width: 150px; height: 173px; right: 420px; top: 30px; background: var(--teal); opacity: .9; }
-  /* Photo affichée à sa taille native (524 px) : jamais agrandie, donc jamais floue */
-  .dl { position: absolute; right: 10px; bottom: 0; height: 524px; width: auto; }
+  /* Photo source de 1120 px de haut : nette à 560 px, y compris sur écran Retina et en export 2x */
+  .dl { position: absolute; right: 0; bottom: 0; height: 560px; width: auto; }
   .l { position: absolute; left: 64px; top: 56px; width: 600px; }
   .top { display: flex; align-items: center; gap: 16px; }
   .lab { font-size: 20px; font-weight: 700; letter-spacing: .14em; color: var(--khaki); }
@@ -128,7 +128,7 @@
       <div class="visual">
         <div class="hex2"></div>
         <div class="hex"></div>
-        <img class="dl" id="photo" src="lisnard-detoure.png" alt="David Lisnard">
+        <img class="dl" id="photo" src="lisnard.webp" alt="David Lisnard">
       </div>
       <div class="foot"><span class="h">DL</span>Rejoignez le mouvement · unenouvelleenergie.fr</div>
     </div>
@@ -292,7 +292,7 @@ async function dessinerCarte() {
   await document.fonts.ready;
 
   // Échelle d'export : 2× seulement si la photo source est assez grande pour ne pas être agrandie
-  const echelle = Math.max(1, Math.min(2, Math.floor(photo.naturalHeight / 524)));
+  const echelle = Math.max(1, Math.min(2, Math.floor(photo.naturalHeight / 560)));
   const W = 1200, H = 630;
   const cv = document.createElement("canvas");
   cv.width = W * echelle; cv.height = H * echelle;
@@ -315,8 +315,8 @@ async function dessinerCarte() {
   // Hexagones et photo
   ctx.globalAlpha = .9; ctx.fillStyle = "#0d9296"; hexagone(ctx, 630, 30, 150, 173); ctx.fill(); ctx.globalAlpha = 1;
   ctx.fillStyle = "#b0ad85"; hexagone(ctx, 690, 60, 520, 600); ctx.fill();
-  const ph = 524, pw = photo.naturalWidth * ph / photo.naturalHeight;
-  ctx.drawImage(photo, W - 10 - pw, H - ph, pw, ph);
+  const ph = 560, pw = photo.naturalWidth * ph / photo.naturalHeight;
+  ctx.drawImage(photo, W - pw, H - ph, pw, ph);
 
   // En-tête : libellé + pastille EN DIRECT
   ctx.textBaseline = "middle";

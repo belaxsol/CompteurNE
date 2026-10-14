@@ -783,7 +783,7 @@ def generer_carte_visuelle(
 
 def generer_carte_partage(adherents, gain_24h, gain_7j, cap_precedent, prochain_cap, maintenant,
                           output_path=CARTE_PARTAGE):
-    """Remplit site/compteur-carte-modele.html et le capture en PNG 1200x630 (visuel des posts X)."""
+    """Remplit site/compteur-carte-modele.html et le capture en PNG 2400x1260 (visuel des posts X)."""
     with open(TEMPLATE_PARTAGE, "r", encoding="utf-8") as f:
         html = f.read()
 
@@ -808,8 +808,8 @@ def generer_carte_partage(adherents, gain_24h, gain_7j, cap_precedent, prochain_
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            # Échelle 1 : la photo (524 px de haut) est affichée à sa taille native, donc nette
-            page = browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=1)
+            # Échelle 2 (2400x1260) : la photo source fait 1120 px de haut pour 560 affichés, donc nette
+            page = browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=2)
             page.goto(Path(rendu).resolve().as_uri(), wait_until="networkidle")
             page.evaluate("document.fonts.ready")
             page.screenshot(path=output_path)
