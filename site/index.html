@@ -3,15 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compteur d'adhésions NE</title>
-<meta name="description" content="Nombre d'adhérents à Nouvelle Énergie, mis à jour en temps réel.">
+<title>Compteur d'adhésions à Nouvelle Énergie — en direct</title>
+<meta name="description" content="Nombre d'adhérents à Nouvelle Énergie, mis à jour en temps réel. Rejoignez le mouvement !">
+<link rel="canonical" href="https://ne-compteur.netlify.app/">
+<!-- Aperçu X / Facebook : titre, image et adresse sont adaptés au nombre partagé (?n=) par netlify/edge-functions/apercu.js -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Compteur d'adhésions NE">
 <meta property="og:title" content="Compteur d'adhésions à Nouvelle Énergie">
 <meta property="og:description" content="Suivez le compteur en direct et rejoignez le mouvement.">
 <meta property="og:url" content="https://ne-compteur.netlify.app/">
 <meta property="og:image" content="https://ne-compteur.netlify.app/og.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Compteur des adhérents à Nouvelle Énergie">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Compteur d'adhésions à Nouvelle Énergie">
+<meta name="twitter:description" content="Suivez le compteur en direct et rejoignez le mouvement.">
+<meta name="twitter:image" content="https://ne-compteur.netlify.app/og.png">
+<meta name="twitter:image:alt" content="Compteur des adhérents à Nouvelle Énergie">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -165,7 +176,6 @@ const POLL_MS = 60000;        // l'API est mise en cache 60 s côté serveur
 const PAS_CAP = 5000;
 // Adresse publique du site (les liens /partage/ et l'image og ne fonctionnent que sur Netlify)
 const ORIGINE = location.protocol === "https:" ? location.origin : "https://ne-compteur.netlify.app";
-const LIEN_ADHESION = "https://soutenir.unenouvelleenergie.fr/p/V52CQY5T";
 const MOIS = ["JANV.", "FÉVR.", "MARS", "AVR.", "MAI", "JUIN", "JUIL.", "AOÛT", "SEPT.", "OCT.", "NOV.", "DÉC."];
 
 const fmt = n => Math.round(n).toLocaleString("fr-FR").replace(/ | /g, " ");
@@ -389,11 +399,11 @@ async function preparerImage() {
 }
 
 // ---------- Partage ----------
-// Tout est automatique : le post contient un seul lien, /partage/<total>, dont la carte (image du compteur
-// générée par netlify/functions/og.mjs) s'affiche sous le post sur X et Facebook. Un clic sur la carte
-// mène au lien d'adhésion. Sur mobile, l'image est en plus jointe directement au post.
+// Tout est automatique : le post contient un seul lien, la page du compteur (/?n=<total>). X et Facebook
+// affichent sa carte (image générée par netlify/functions/og.mjs) sous le post. Sur mobile, l'image est
+// en plus jointe directement au post.
 let lienCourant = "";
-const nouveauLien = () => (lienCourant = `${ORIGINE}/partage/${etat.total}?v=${Date.now().toString(36)}`);
+const nouveauLien = () => (lienCourant = `${ORIGINE}/?n=${etat.total}`);
 const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie ! Rejoignez le mouvement 👉`;
 const fichier = () => new File([imageBlob], `nouvelle-energie-${etat.total}.png`, { type: "image/png" });
 
@@ -415,7 +425,7 @@ async function partageNatif() {
   if (!imageBlob || !matchMedia("(pointer: coarse)").matches) return false;
   const f = fichier();
   if (!navigator.canShare?.({ files: [f] })) return false;
-  try { await navigator.share({ files: [f], text: `${texteTweet()} ${LIEN_ADHESION}` }); }
+  try { await navigator.share({ files: [f], text: `${texteTweet()} ${lienCourant}` }); }
   catch (e) { if (e.name !== "AbortError") return false; }
   return true;
 }
