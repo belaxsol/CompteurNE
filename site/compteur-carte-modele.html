@@ -1,0 +1,47 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:"Outfit";font-weight:100 900;src:url(https://fonts.gstatic.com/s/outfit/v11/QGYvz_MVcBeNP4NJtEtq.woff2) format("woff2");}
+*{box-sizing:border-box;margin:0}
+html,body{width:1200px;height:630px;overflow:hidden}
+body{font-family:"Outfit",sans-serif;background:#1d257a;color:#fff;position:relative}
+.pattern{position:absolute;inset:0;background:
+  radial-gradient(ellipse 60% 80% at 85% 100%,rgba(13,146,150,.35),transparent 70%),
+  repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 2px,transparent 2px 22px)}
+.hex{position:absolute;width:520px;height:600px;right:-10px;top:60px;background:#b0ad85;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.hex2{position:absolute;width:150px;height:173px;right:420px;top:30px;background:#0d9296;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);opacity:.9}
+.dl{position:absolute;right:10px;bottom:0;height:524px}
+.l{position:absolute;left:64px;top:56px;width:600px}
+.top{display:flex;align-items:center;gap:16px}
+.lab{font-size:20px;font-weight:700;letter-spacing:.14em;color:#b0ad85}
+.live{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.35);font-size:15px;font-weight:700;letter-spacing:.08em}
+.live i{width:10px;height:10px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 0 4px rgba(255,59,92,.25)}
+.num{font-size:150px;font-weight:800;line-height:.95;letter-spacing:-.03em;margin-top:22px}
+.sub{font-size:30px;font-weight:500;color:#dfe2f5;margin-top:8px}.sub b{color:#fff;font-weight:700}
+.stats{display:flex;gap:14px;margin-top:30px}
+.st{padding:14px 20px;border-radius:14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18)}
+.st b{display:block;font-size:34px;font-weight:800}.st small{font-size:14px;font-weight:700;letter-spacing:.1em;color:#c9cce6}
+.st b.g{color:#5ee0a8}.st b.t{color:#7fe3e6}
+.cap{margin-top:28px;width:560px}
+.cap .row{display:flex;justify-content:space-between;font-size:20px;font-weight:700}
+.cap .row span:last-child{color:#7fe3e6}
+.bar{height:12px;border-radius:12px;background:rgba(255,255,255,.15);margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:70%;border-radius:12px;background:linear-gradient(90deg,#0d9296,#7fe3e6)}
+.foot{position:absolute;left:64px;bottom:36px;display:flex;align-items:center;gap:14px;font-size:20px;font-weight:600;color:#dfe2f5}
+.foot .h{width:44px;height:50px;background:#b0ad85;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:grid;place-items:center;color:#1d257a;font-weight:800;font-size:17px}
+</style></head><body>
+<div class="pattern"></div>
+<div class="hex2"></div>
+<div class="hex"></div>
+<img class="dl" src="lisnard-detoure.png">
+<div class="l">
+  <div class="top"><span class="lab">ADHÉRENTS · {{DATE}}</span><span class="live"><i></i>EN DIRECT</span></div>
+  <div class="num">{{TOTAL}}</div>
+  <div class="sub">adhérents à <b>Nouvelle Énergie</b></div>
+  <div class="stats">
+    <div class="st"><b class="g">{{D24}}</b><small>DERNIÈRES 24 H</small></div>
+    <div class="st"><b class="t">{{D7}}</b><small>SUR 7 JOURS</small></div>
+  </div>
+  <div class="cap"><div class="row"><span>Cap {{CAP}}</span><span>{{PCT}}</span></div><div class="bar"><i style="width:{{PCTN}}%"></i></div></div>
+</div>
+<div class="foot"><span class="h">DL</span>Rejoignez le mouvement · unenouvelleenergie.fr</div>
+</body></html>

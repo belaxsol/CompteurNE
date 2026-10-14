@@ -5,138 +5,200 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Compteur d'adhésions NE</title>
 <meta name="description" content="Nombre d'adhérents à Nouvelle Énergie, mis à jour en temps réel.">
+<meta property="og:title" content="Compteur d'adhésions à Nouvelle Énergie">
+<meta property="og:description" content="Suivez le compteur en direct et rejoignez le mouvement.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f6fb;
-    --card: #ffffff;
-    --ink: #0f1b3d;
-    --muted: #6b7591;
-    --line: #e3e8f2;
-    --blue: #1f5eff;
-    --blue-soft: rgba(31, 94, 255, .12);
-    --green: #11a36a;
-    --red: #e5243b;
+    --navy: #1d257a;
+    --khaki: #b0ad85;
+    --teal: #0d9296;
+    --teal-light: #7fe3e6;
+    --green: #5ee0a8;
+    --ink-soft: #dfe2f5;
+    --label: #c9cce6;
+    --pink: #ff3b5c;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0b1122;
-      --card: #131b33;
-      --ink: #eef2ff;
-      --muted: #8f9ab8;
-      --line: #24304f;
-      --blue: #5b8cff;
-      --blue-soft: rgba(91, 140, 255, .18);
-      --green: #35c98d;
-    }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Outfit", system-ui, sans-serif; background: #fff; color: var(--navy); }
+
+  /* ---------- Carte compteur (reprise exacte du modèle 1200 × 630) ---------- */
+  .band {
+    background: var(--navy);
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 22px);
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  .stage { max-width: 1200px; margin: 0 auto; position: relative; overflow: hidden; }
+  .card {
+    width: 1200px; height: 630px; position: relative; overflow: hidden;
+    background: var(--navy); color: #fff; transform-origin: top left;
   }
-  .flag { height: 5px; background: linear-gradient(90deg, #1b2f8f 33%, #fff 33% 66%, var(--red) 66%); }
-  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 48px; }
-  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .eyebrow { color: var(--blue); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
-  .live {
-    display: inline-flex; align-items: center; gap: 8px;
-    border: 1px solid var(--line); background: var(--card);
-    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700;
-    letter-spacing: .05em; text-transform: uppercase;
-  }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); animation: pulse 1.6s infinite; }
-  .live.stale .dot { background: var(--muted); animation: none; }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229,36,59,.5); } 70% { box-shadow: 0 0 0 9px rgba(229,36,59,0); } 100% { box-shadow: 0 0 0 0 rgba(229,36,59,0); } }
-  .total { font-size: clamp(56px, 14vw, 112px); font-weight: 800; letter-spacing: -.03em; line-height: 1; margin: 20px 0 6px; font-variant-numeric: tabular-nums; }
-  .sub { color: var(--muted); font-size: 18px; margin: 0 0 28px; }
-  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
-  .kpi-val { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .kpi-lbl { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
-  .green { color: var(--green); }
-  .blue { color: var(--blue); }
-  svg { display: block; width: 100%; height: auto; }
-  .axis { fill: var(--muted); font-size: 11px; }
-  .cap-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .cap-pct { color: var(--blue); font-weight: 800; font-size: 20px; }
-  .bar { height: 12px; background: var(--line); border-radius: 999px; overflow: hidden; }
-  .bar > div { height: 100%; background: linear-gradient(90deg, #1b2f8f, var(--blue)); border-radius: 999px; transition: width .8s ease; }
-  .cap-foot { color: var(--muted); font-size: 13px; margin-top: 10px; }
-  footer { color: var(--muted); font-size: 13px; margin-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  footer a { color: inherit; }
-  .bump { animation: bump .6s ease; }
+  .pattern { position: absolute; inset: 0; background:
+    radial-gradient(ellipse 60% 80% at 85% 100%, rgba(13,146,150,.35), transparent 70%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 22px); }
+  .visual { position: absolute; inset: 0; }
+  .hex, .hex2, .foot .h { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  .hex { position: absolute; width: 520px; height: 600px; right: -10px; top: 60px; background: var(--khaki); }
+  .hex2 { position: absolute; width: 150px; height: 173px; right: 420px; top: 30px; background: var(--teal); opacity: .9; }
+  /* Photo affichée à sa taille native (524 px) : jamais agrandie, donc jamais floue */
+  .dl { position: absolute; right: 10px; bottom: 0; height: 524px; width: auto; }
+  .l { position: absolute; left: 64px; top: 56px; width: 600px; }
+  .top { display: flex; align-items: center; gap: 16px; }
+  .lab { font-size: 20px; font-weight: 700; letter-spacing: .14em; color: var(--khaki); }
+  .live { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 99px;
+    border: 1.5px solid rgba(255,255,255,.35); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+  .live i { width: 10px; height: 10px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 4px rgba(255,59,92,.25);
+    animation: pulse 1.6s infinite; }
+  .live.stale i { background: #9aa0c7; box-shadow: none; animation: none; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(255,59,92,.08); } }
+  .num { font-size: 150px; font-weight: 800; line-height: .95; letter-spacing: -.03em; margin-top: 22px; font-variant-numeric: tabular-nums; }
+  .sub { font-size: 30px; font-weight: 500; color: var(--ink-soft); margin-top: 8px; }
+  .sub b { color: #fff; font-weight: 700; }
+  .stats { display: flex; gap: 14px; margin-top: 30px; }
+  .st { padding: 14px 20px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.18); }
+  .st b { display: block; font-size: 34px; font-weight: 800; }
+  .st small { font-size: 14px; font-weight: 700; letter-spacing: .1em; color: var(--label); }
+  .st b.g { color: var(--green); }
+  .st b.t { color: var(--teal-light); }
+  .cap { margin-top: 28px; width: 560px; }
+  .cap .row { display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; }
+  .cap .row span:last-child { color: var(--teal-light); }
+  .bar { height: 12px; border-radius: 12px; background: rgba(255,255,255,.15); margin-top: 10px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 12px; background: linear-gradient(90deg, var(--teal), var(--teal-light)); transition: width .8s ease; }
+  .foot { position: absolute; left: 64px; bottom: 36px; display: flex; align-items: center; gap: 14px; font-size: 20px; font-weight: 600; color: var(--ink-soft); }
+  .foot .h { width: 44px; height: 50px; background: var(--khaki); display: grid; place-items: center; color: var(--navy); font-weight: 800; font-size: 17px; }
+  .bump { animation: bump .7s ease; }
   @keyframes bump { 40% { color: var(--green); } }
-  @media (max-width: 560px) {
-    .kpis { grid-template-columns: 1fr; }
+
+  /* ---------- Barre de partage ---------- */
+  .share-zone { max-width: 1200px; margin: 0 auto; padding: 28px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .ne-share { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .ne-share__label { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--navy); }
+  .ne-share__btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 10px;
+    border: 2px solid var(--navy); color: var(--navy); background: #fff; font: inherit; font-weight: 700; font-size: 16px;
+    text-decoration: none; cursor: pointer; transition: background .15s, color .15s; }
+  .ne-share__btn:hover, .ne-share__btn:focus-visible { background: var(--navy); color: #fff; }
+  .ne-share__btn[disabled] { opacity: .5; cursor: wait; }
+  .toast { min-height: 22px; font-size: 15px; font-weight: 500; color: #4a5180; text-align: center; }
+  .meta { font-size: 13px; color: #7a80a6; }
+  .meta a { color: inherit; }
+
+  /* ---------- Mobile : même design, empilé ---------- */
+  @media (max-width: 899px) {
+    .card { width: 100%; height: auto; transform: none !important; padding: 32px 16px 0; display: flex; flex-direction: column; }
+    .stage { height: auto !important; }
+    .l { position: static; width: auto; }
+    .top { gap: 10px; flex-wrap: wrap; }
+    .lab { font-size: 14px; }
+    .live { font-size: 12px; padding: 5px 11px; }
+    .num { font-size: clamp(64px, 21vw, 130px); margin-top: 16px; }
+    .sub { font-size: 21px; }
+    .stats { margin-top: 22px; flex-wrap: wrap; }
+    .st { padding: 12px 16px; flex: 1 1 140px; }
+    .st b { font-size: 28px; }
+    .st small { font-size: 12px; }
+    .cap { width: auto; margin-top: 24px; }
+    .cap .row { font-size: 17px; }
+    .foot { position: static; order: 2; margin-top: 24px; font-size: 15px; gap: 10px; }
+    .foot .h { width: 36px; height: 41px; font-size: 14px; flex: none; }
+    .visual { position: relative; inset: auto; order: 3; height: 340px; margin: 16px -16px 0; overflow: hidden; }
+    .hex { width: 300px; height: 346px; top: 24px; right: -20px; }
+    .hex2 { width: 90px; height: 104px; top: 0; right: 230px; }
+    .dl { height: 330px; right: 0; }
   }
 </style>
 </head>
 <body>
-<div class="flag"></div>
-<main>
-  <header>
-    <span class="eyebrow" id="date">Adhérents</span>
-    <span class="live" id="live"><span class="dot"></span><span id="live-txt">En direct</span></span>
-  </header>
+<section class="band">
+  <div class="stage" id="stage">
+    <div class="card" id="card">
+      <div class="pattern"></div>
+      <div class="l">
+        <div class="top"><span class="lab" id="lab">ADHÉRENTS</span><span class="live" id="live"><i></i><span id="live-txt">EN DIRECT</span></span></div>
+        <div class="num" id="compteur-total">—</div>
+        <div class="sub">adhérents à <b>Nouvelle Énergie</b></div>
+        <div class="stats">
+          <div class="st"><b class="g" id="d24">—</b><small>DERNIÈRES 24 H</small></div>
+          <div class="st"><b class="t" id="d7">—</b><small>SUR 7 JOURS</small></div>
+        </div>
+        <div class="cap"><div class="row"><span id="cap">Cap —</span><span id="pct">—</span></div><div class="bar"><i id="bar"></i></div></div>
+      </div>
+      <div class="visual">
+        <div class="hex2"></div>
+        <div class="hex"></div>
+        <img class="dl" id="photo" src="lisnard-detoure.png" alt="David Lisnard">
+      </div>
+      <div class="foot"><span class="h">DL</span>Rejoignez le mouvement · unenouvelleenergie.fr</div>
+    </div>
+  </div>
+</section>
 
-  <div class="total" id="total">—</div>
-  <p class="sub">adhérents à Nouvelle Énergie</p>
-
-  <section class="kpis">
-    <div class="card"><div class="kpi-val green" id="k24">—</div><div class="kpi-lbl">Dernières 24 h</div></div>
-    <div class="card"><div class="kpi-val blue" id="k7">—</div><div class="kpi-lbl">Sur 7 jours</div></div>
-    <div class="card"><div class="kpi-val" id="kh">—</div><div class="kpi-lbl">Adhésions / heure</div></div>
-  </section>
-
-  <section class="card" style="margin-bottom:16px">
-    <svg id="chart" viewBox="0 0 800 260" role="img" aria-label="Évolution du nombre d'adhérents"></svg>
-  </section>
-
-  <section class="card">
-    <div class="cap-head"><strong>Cap <span id="cap">—</span></strong><span class="cap-pct" id="cap-pct">—</span></div>
-    <div class="bar"><div id="cap-bar" style="width:0"></div></div>
-    <div class="cap-foot" id="cap-foot">—</div>
-  </section>
-
-  <footer>
-    <span>Données : <a href="https://adherent.unenouvelleenergie.fr/donnees" rel="noopener">unenouvelleenergie.fr</a></span>
-    <span id="maj">—</span>
-  </footer>
-</main>
+<section class="share-zone">
+  <div class="ne-share">
+    <span class="ne-share__label">Partager</span>
+    <button class="ne-share__btn" id="share-x" type="button" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.9-6.4L6.3 22H3.2l7.3-8.3L1 2h6.3l4.4 5.9L18.9 2Zm-1.1 18.2h1.7L6.3 3.7H4.5l13.3 16.5Z"/></svg>
+      X
+    </button>
+    <button class="ne-share__btn" id="share-fb" type="button" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M14 8V6.2c0-.8.2-1.2 1.4-1.2H17V2h-2.6C11.3 2 10.5 3.6 10.5 6v2H8v3h2.5v11H14V11h2.7l.4-3H14Z"/></svg>
+      Facebook
+    </button>
+    <button class="ne-share__btn" id="share-dl" type="button" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M11 3h2v10.2l3.6-3.6L18 11l-6 6-6-6 1.4-1.4L11 13.2V3ZM4 19h16v2H4v-2Z"/></svg>
+      Image
+    </button>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="meta">Données : <a href="https://adherent.unenouvelleenergie.fr/donnees" rel="noopener">unenouvelleenergie.fr</a> · <span id="maj">—</span></div>
+</section>
 
 <script>
 const URL_LIVE = "https://adherent.unenouvelleenergie.fr/donnees/adherents.json";
 const URL_HISTO = "https://adherent.unenouvelleenergie.fr/donnees/adherents/historique.json";
 const POLL_MS = 60000;        // l'API est mise en cache 60 s côté serveur
 const PAS_CAP = 5000;
-const JOURS_GRAPHE = 45;
-const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const URL_PAGE = location.protocol.startsWith("http") ? location.href.split("#")[0] : "https://unenouvelleenergie.fr";
+const MOIS = ["JANV.", "FÉVR.", "MARS", "AVR.", "MAI", "JUIN", "JUIL.", "AOÛT", "SEPT.", "OCT.", "NOV.", "DÉC."];
 
 const fmt = n => Math.round(n).toLocaleString("fr-FR").replace(/ | /g, " ");
 const signe = n => (n >= 0 ? "+" : "") + fmt(n);
 const $ = id => document.getElementById(id);
 
-let historique = [];          // [{t: Date, v: number}] un point par jour
-let echantillons = [];        // relevés live de la session, pour la cadence horaire
+let historique = [];
 let affiche = 0;
+let etat = null;              // dernières valeurs affichées, reprises par l'image de partage
+let imageBlob = null;
 
+// ---------- Mise à l'échelle de la carte (desktop) ----------
+function ajusterCarte() {
+  const stage = $("stage"), card = $("card");
+  if (innerWidth < 900) { card.style.transform = ""; stage.style.height = ""; return; }
+  const s = Math.min(1, stage.clientWidth / 1200);
+  card.style.transform = `scale(${s})`;
+  stage.style.height = 630 * s + "px";
+}
+addEventListener("resize", ajusterCarte);
+ajusterCarte();
+
+// ---------- Données ----------
 function animer(cible) {
-  const depart = affiche, debut = performance.now(), duree = 900;
-  if (depart && cible !== depart) { $("total").classList.remove("bump"); void $("total").offsetWidth; $("total").classList.add("bump"); }
+  const el = $("compteur-total"), depart = affiche, debut = performance.now(), duree = 900;
+  if (depart && cible !== depart) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
   function pas(now) {
     const p = Math.min(1, (now - debut) / duree);
     affiche = depart + (cible - depart) * (1 - Math.pow(1 - p, 3));
-    $("total").textContent = fmt(affiche);
+    el.textContent = fmt(affiche);
     if (p < 1) requestAnimationFrame(pas); else affiche = cible;
   }
   requestAnimationFrame(pas);
 }
 
-// Valeur interpolée de la série journalière à un instant donné
 function valeurA(t, serie) {
-  if (!serie.length || t <= serie[0].t) return serie.length ? serie[0].v : null;
+  if (!serie.length) return null;
+  if (t <= serie[0].t) return serie[0].v;
   for (let i = 1; i < serie.length; i++) {
     if (t <= serie[i].t) {
       const a = serie[i - 1], b = serie[i];
@@ -146,89 +208,223 @@ function valeurA(t, serie) {
   return serie[serie.length - 1].v;
 }
 
-function dessinerGraphe(serie) {
-  const W = 800, H = 260, G = 44, D = 56, Hh = 16, B = 30;
-  const xs = serie.map(p => +p.t), ys = serie.map(p => p.v);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
-  const yMin = Math.floor(Math.min(...ys) / 5000) * 5000, yMax = Math.ceil(Math.max(...ys) / 5000) * 5000 || 1;
-  const X = t => G + (t - x0) / (x1 - x0 || 1) * (W - G - D);
-  const Y = v => H - B - (v - yMin) / (yMax - yMin || 1) * (H - B - Hh);
-  let svg = "";
-  for (let v = yMin; v <= yMax; v += 5000) {
-    svg += `<line x1="${G}" x2="${W - D}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`;
-    svg += `<text class="axis" x="${W - D + 8}" y="${Y(v) + 4}">${v / 1000}k</text>`;
-  }
-  const pas = Math.max(1, Math.round(serie.length / 6));
-  serie.forEach((p, i) => {
-    if (i % pas === 0) svg += `<text class="axis" x="${X(+p.t)}" y="${H - 8}" text-anchor="middle">${p.t.getDate()} ${MOIS[p.t.getMonth()]}</text>`;
-  });
-  const pts = serie.map(p => `${X(+p.t).toFixed(1)},${Y(p.v).toFixed(1)}`);
-  svg += `<path d="M${pts[0]} L${pts.join(" L")} L${X(x1)},${H - B} L${X(x0)},${H - B} Z" fill="var(--blue-soft)"/>`;
-  svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round"/>`;
-  const last = serie[serie.length - 1];
-  svg += `<circle cx="${X(+last.t)}" cy="${Y(last.v)}" r="9" fill="none" stroke="var(--red)" stroke-width="2" opacity=".5"/>`;
-  svg += `<circle cx="${X(+last.t)}" cy="${Y(last.v)}" r="5" fill="var(--red)"/>`;
-  $("chart").innerHTML = svg;
-}
-
 async function chargerHistorique() {
-  const r = await fetch(URL_HISTO, { cache: "no-cache" });
-  const j = await r.json();
+  const j = await (await fetch(URL_HISTO, { cache: "no-cache" })).json();
+  // La valeur d'un jour correspond au total en fin de journée (≈ minuit UTC suivant)
   historique = (j.jours || [])
-    // La valeur d'un jour correspond au total en fin de journée (≈ minuit UTC suivant)
     .map(d => ({ t: new Date(Date.parse(`${d.jour || d.date}T00:00:00Z`) + 86400e3), v: d.adherents }))
     .filter(p => !isNaN(p.t) && Number.isFinite(p.v));
 }
 
-function cadenceHoraire(total, maj) {
-  // Priorité aux relevés live de la session (≥ 20 min d'écart), sinon tendance des 24 h
-  const ancien = echantillons.find(e => maj - e.t >= 20 * 60e3);
-  if (ancien) return (total - ancien.v) / ((maj - ancien.t) / 3600e3);
-  const v24 = valeurA(new Date(maj - 24 * 3600e3), historique);
-  return v24 == null ? null : (total - v24) / 24;
-}
-
 async function rafraichir() {
   try {
-    const r = await fetch(URL_LIVE, { cache: "no-cache" });
-    const j = await r.json();
+    const j = await (await fetch(URL_LIVE, { cache: "no-cache" })).json();
     const total = j.adherents, maj = new Date(j.mis_a_jour);
     if (!historique.length || maj - historique[historique.length - 1].t > 30 * 3600e3) await chargerHistorique();
 
-    if (!echantillons.length || echantillons[echantillons.length - 1].v !== total) echantillons.push({ t: maj, v: total });
-    animer(total);
-
-    const g24 = valeurA(new Date(maj - 24 * 3600e3), historique);
-    const g7 = valeurA(new Date(maj - 7 * 24 * 3600e3), historique);
-    $("k24").textContent = g24 == null ? "—" : signe(total - g24);
-    $("k7").textContent = g7 == null ? "—" : signe(total - g7);
-    const h = cadenceHoraire(total, maj);
-    $("kh").textContent = h == null ? "—" : "~" + fmt(h);
-
+    const v24 = valeurA(new Date(maj - 24 * 3600e3), historique);
+    const v7 = valeurA(new Date(maj - 7 * 24 * 3600e3), historique);
     const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = capBas + PAS_CAP;
     const pct = (total - capBas) / PAS_CAP * 100;
-    const parJour = g7 == null ? 0 : (total - g7) / 7;
-    let proj = "—";
-    if (parJour > 0) { const d = new Date(+maj + (capHaut - total) / parJour * 86400e3); proj = `~${d.getDate()} ${MOIS[d.getMonth()]}`; }
-    $("cap").textContent = fmt(capHaut);
-    $("cap-pct").textContent = Math.floor(pct) + " %";
-    $("cap-bar").style.width = pct.toFixed(1) + "%";
-    $("cap-foot").textContent = `Tranche ${fmt(capBas)} → ${fmt(capHaut)} · Reste ${fmt(capHaut - total)} · Projection ${proj}`;
 
-    const debut = new Date(+maj - JOURS_GRAPHE * 86400e3);
-    const serie = historique.filter(p => p.t >= debut && p.t < maj).concat([{ t: maj, v: total }]);
-    if (serie.length > 1) dessinerGraphe(serie);
+    etat = {
+      total,
+      date: `${maj.getDate()} ${MOIS[maj.getMonth()]} ${maj.getFullYear()}`,
+      d24: v24 == null ? "—" : signe(total - v24),
+      d7: v7 == null ? "—" : signe(total - v7),
+      cap: `Cap ${fmt(capHaut)}`,
+      pct: Math.floor(pct) + " %",
+      pctN: pct,
+    };
 
-    $("date").textContent = `Adhérents · ${maj.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
-    $("maj").textContent = `Mis à jour à ${maj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+    animer(total);
+    $("lab").textContent = `ADHÉRENTS · ${etat.date}`;
+    $("d24").textContent = etat.d24;
+    $("d7").textContent = etat.d7;
+    $("cap").textContent = etat.cap;
+    $("pct").textContent = etat.pct;
+    $("bar").style.width = pct.toFixed(1) + "%";
+    $("maj").textContent = `mis à jour à ${maj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
     $("live").classList.remove("stale");
-    $("live-txt").textContent = "En direct";
+    $("live-txt").textContent = "EN DIRECT";
+
+    await preparerImage();
   } catch (e) {
     console.error(e);
     $("live").classList.add("stale");
-    $("live-txt").textContent = "Hors ligne";
+    $("live-txt").textContent = "HORS LIGNE";
   }
 }
+
+// ---------- Image de partage (dessinée en canvas, mêmes cotes que la carte) ----------
+const HEX = [[.5, 0], [1, .25], [1, .75], [.5, 1], [0, .75], [0, .25]];
+function hexagone(ctx, x, y, w, h) {
+  ctx.beginPath();
+  HEX.forEach(([px, py], i) => ctx[i ? "lineTo" : "moveTo"](x + px * w, y + py * h));
+  ctx.closePath();
+}
+function arrondi(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h);
+}
+// Texte avec interlettrage (letter-spacing), y compris sur les navigateurs sans ctx.letterSpacing
+function texte(ctx, str, x, y, espacement = 0) {
+  if (!espacement) { ctx.fillText(str, x, y); return ctx.measureText(str).width; }
+  if ("letterSpacing" in ctx) {
+    ctx.letterSpacing = espacement + "px";
+    ctx.fillText(str, x, y);
+    const w = ctx.measureText(str).width;
+    ctx.letterSpacing = "0px";
+    return w;
+  }
+  let cx = x;
+  for (const ch of str) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + espacement; }
+  return cx - x;
+}
+function largeur(ctx, str, espacement = 0) {
+  return ctx.measureText(str).width + espacement * [...str].length;
+}
+
+async function dessinerCarte() {
+  const photo = $("photo");
+  if (!photo.complete) await new Promise(r => photo.addEventListener("load", r, { once: true }));
+  await document.fonts.load("800 150px Outfit");
+  await document.fonts.ready;
+
+  // Échelle d'export : 2× seulement si la photo source est assez grande pour ne pas être agrandie
+  const echelle = Math.max(1, Math.min(2, Math.floor(photo.naturalHeight / 524)));
+  const W = 1200, H = 630;
+  const cv = document.createElement("canvas");
+  cv.width = W * echelle; cv.height = H * echelle;
+  const ctx = cv.getContext("2d");
+  ctx.scale(echelle, echelle);
+  ctx.imageSmoothingQuality = "high";
+
+  // Fond, halo, rayures
+  ctx.fillStyle = "#1d257a"; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(W * .85, H); ctx.scale(1, (H * .8) / (W * .6));
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, W * .6);
+  g.addColorStop(0, "rgba(13,146,150,.35)"); g.addColorStop(.7, "rgba(13,146,150,0)");
+  ctx.fillStyle = g; ctx.fillRect(-W, -H * 2, W * 2, H * 3);
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,.035)"; ctx.lineWidth = 2;
+  const pasRayure = 22 * Math.SQRT2;
+  for (let x = 0; x < W + H; x += pasRayure) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - H, H); ctx.stroke(); }
+
+  // Hexagones et photo
+  ctx.globalAlpha = .9; ctx.fillStyle = "#0d9296"; hexagone(ctx, 630, 30, 150, 173); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = "#b0ad85"; hexagone(ctx, 690, 60, 520, 600); ctx.fill();
+  const ph = 524, pw = photo.naturalWidth * ph / photo.naturalHeight;
+  ctx.drawImage(photo, W - 10 - pw, H - ph, pw, ph);
+
+  // En-tête : libellé + pastille EN DIRECT
+  ctx.textBaseline = "middle";
+  ctx.font = "700 20px Outfit"; ctx.fillStyle = "#b0ad85";
+  const labW = texte(ctx, `ADHÉRENTS · ${etat.date}`, 64, 73, 2.8);
+  ctx.font = "700 15px Outfit";
+  const liveX = 64 + labW + 16, liveTxtW = largeur(ctx, "EN DIRECT", 1.2);
+  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1.5;
+  arrondi(ctx, liveX + .75, 56.75, 14 + 10 + 8 + liveTxtW + 14 - 1.5, 32, 16); ctx.stroke();
+  ctx.fillStyle = "rgba(255,59,92,.25)"; ctx.beginPath(); ctx.arc(liveX + 19, 73, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ff3b5c"; ctx.beginPath(); ctx.arc(liveX + 19, 73, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff"; texte(ctx, "EN DIRECT", liveX + 32, 73.5, 1.2);
+
+  // Total + sous-titre
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "800 150px Outfit"; ctx.fillStyle = "#fff";
+  texte(ctx, fmt(etat.total), 64, 239, -4.5);
+  ctx.font = "500 30px Outfit"; ctx.fillStyle = "#dfe2f5";
+  const debutSub = "adhérents à ";
+  texte(ctx, debutSub, 64, 292);
+  const subW = ctx.measureText(debutSub).width;
+  ctx.font = "700 30px Outfit"; ctx.fillStyle = "#fff"; texte(ctx, "Nouvelle Énergie", 64 + subW, 292);
+
+  // Pavés 24 h / 7 jours
+  let bx = 64;
+  for (const [val, lib, coul] of [[etat.d24, "DERNIÈRES 24 H", "#5ee0a8"], [etat.d7, "SUR 7 JOURS", "#7fe3e6"]]) {
+    ctx.font = "800 34px Outfit"; const vw = ctx.measureText(val).width;
+    ctx.font = "700 14px Outfit"; const lw = largeur(ctx, lib, 1.4);
+    const bw = 40 + Math.max(vw, lw);
+    arrondi(ctx, bx, 331, bw, 91, 14);
+    ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.font = "800 34px Outfit"; ctx.fillStyle = coul; texte(ctx, val, bx + 20, 379);
+    ctx.font = "700 14px Outfit"; ctx.fillStyle = "#c9cce6"; texte(ctx, lib, bx + 20, 405, 1.4);
+    bx += bw + 14;
+  }
+
+  // Cap + barre
+  ctx.font = "700 20px Outfit"; ctx.fillStyle = "#fff"; texte(ctx, etat.cap, 64, 471);
+  ctx.fillStyle = "#7fe3e6"; ctx.textAlign = "right"; ctx.fillText(etat.pct, 624, 471); ctx.textAlign = "left";
+  arrondi(ctx, 64, 487, 560, 12, 6); ctx.fillStyle = "rgba(255,255,255,.15)"; ctx.fill();
+  const gb = ctx.createLinearGradient(64, 0, 64 + 560 * etat.pctN / 100, 0);
+  gb.addColorStop(0, "#0d9296"); gb.addColorStop(1, "#7fe3e6");
+  arrondi(ctx, 64, 487, Math.max(12, 560 * etat.pctN / 100), 12, 6); ctx.fillStyle = gb; ctx.fill();
+
+  // Pied : hexagone DL + appel
+  ctx.fillStyle = "#b0ad85"; hexagone(ctx, 64, 544, 44, 50); ctx.fill();
+  ctx.textBaseline = "middle"; ctx.textAlign = "center";
+  ctx.font = "800 17px Outfit"; ctx.fillStyle = "#1d257a"; ctx.fillText("DL", 86, 570);
+  ctx.textAlign = "left"; ctx.font = "600 20px Outfit"; ctx.fillStyle = "#dfe2f5";
+  ctx.fillText("Rejoignez le mouvement · unenouvelleenergie.fr", 122, 570);
+
+  return new Promise(r => cv.toBlob(r, "image/png"));
+}
+
+async function preparerImage() {
+  try {
+    imageBlob = await dessinerCarte();
+    ["share-x", "share-fb", "share-dl"].forEach(id => $(id).disabled = !imageBlob);
+  } catch (e) { console.error("Image de partage :", e); }
+}
+
+// ---------- Partage ----------
+const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie. Rejoignez le mouvement !`;
+const fichier = () => new File([imageBlob], `nouvelle-energie-${etat.total}.png`, { type: "image/png" });
+let toastTimer;
+function toast(msg) { $("toast").textContent = msg; clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").textContent = "", 8000); }
+
+function telecharger() {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(imageBlob); a.download = fichier().name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// Mobile : feuille de partage native avec l'image (l'utilisateur choisit X ou Facebook)
+async function partageNatif() {
+  const f = fichier();
+  if (!navigator.canShare?.({ files: [f] })) return false;
+  try { await navigator.share({ files: [f], text: `${texteTweet()} ${URL_PAGE}` }); }
+  catch (e) { if (e.name !== "AbortError") return false; }
+  return true;
+}
+
+async function copierImage() {
+  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": imageBlob })]); return true; }
+  catch { return false; }
+}
+
+$("share-x").addEventListener("click", async () => {
+  if (!imageBlob) return;
+  if (matchMedia("(pointer: coarse)").matches && await partageNatif()) return;
+  // Desktop : X n'accepte pas d'image via lien, on la copie (Ctrl+V dans le post) ou on la télécharge
+  open("https://x.com/intent/post?text=" + encodeURIComponent(texteTweet()) + "&url=" + encodeURIComponent(URL_PAGE), "_blank", "noopener");
+  if (await copierImage()) toast("Image copiée : faites Ctrl+V (⌘+V) dans le post X pour l'ajouter.");
+  else { telecharger(); toast("Image téléchargée : ajoutez-la au post X avec l'icône photo."); }
+});
+
+$("share-fb").addEventListener("click", async () => {
+  if (!imageBlob) return;
+  if (matchMedia("(pointer: coarse)").matches && await partageNatif()) return;
+  open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(URL_PAGE), "_blank", "noopener");
+  telecharger();
+  await copierImage();
+  toast("Image téléchargée et copiée : ajoutez-la à votre publication Facebook.");
+});
+
+$("share-dl").addEventListener("click", () => { if (imageBlob) telecharger(); });
 
 rafraichir();
 setInterval(rafraichir, POLL_MS);

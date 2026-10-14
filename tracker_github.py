@@ -8,6 +8,7 @@ import json
 import os
 import smtplib
 import sys
+from pathlib import Path
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -24,6 +25,8 @@ URL_HISTO = "https://adherent.unenouvelleenergie.fr/donnees/adherents/historique
 CSV_FILE = "data/adherents.csv"
 STATE_FILE = "data/last_alert.json"
 CHART_FILE = "data/stats_card.png"
+CARTE_PARTAGE = "data/partage.png"
+TEMPLATE_PARTAGE = "site/compteur-carte-modele.html"
 
 SMTP_USER = os.getenv("GMAIL_USER")
 SMTP_PASS = os.getenv("GMAIL_APP_PASS")
@@ -778,6 +781,42 @@ def generer_carte_visuelle(
         page.screenshot(path=output_path)
         browser.close()
 
+def generer_carte_partage(adherents, gain_24h, gain_7j, cap_precedent, prochain_cap, maintenant,
+                          output_path=CARTE_PARTAGE):
+    """Remplit site/compteur-carte-modele.html et le capture en PNG 1200x630 (visuel des posts X)."""
+    with open(TEMPLATE_PARTAGE, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    pct = (adherents - cap_precedent) / (prochain_cap - cap_precedent) * 100
+    date_fr = maintenant.astimezone(TZ_FR)
+    valeurs = {
+        "{{DATE}}": f"{date_fr.day} {MOIS_FR[date_fr.month].upper()} {date_fr.year}",
+        "{{TOTAL}}": formater_nombre(adherents),
+        "{{D24}}": f"{'+' if gain_24h >= 0 else '-'}{formater_nombre(abs(gain_24h))}",
+        "{{D7}}": f"{'+' if gain_7j >= 0 else '-'}{formater_nombre(abs(gain_7j))}",
+        "{{CAP}}": formater_nombre(prochain_cap),
+        "{{PCT}}": f"{int(pct)} %",
+        "{{PCTN}}": f"{pct:.1f}",
+    }
+    for cle, val in valeurs.items():
+        html = html.replace(cle, val)
+
+    # Fichier temporaire à côté du modèle pour que la photo (chemin relatif) se charge
+    rendu = os.path.join(os.path.dirname(TEMPLATE_PARTAGE), ".rendu-partage.html")
+    with open(rendu, "w", encoding="utf-8") as f:
+        f.write(html)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            # Échelle 1 : la photo (524 px de haut) est affichée à sa taille native, donc nette
+            page = browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=1)
+            page.goto(Path(rendu).resolve().as_uri(), wait_until="networkidle")
+            page.evaluate("document.fonts.ready")
+            page.screenshot(path=output_path)
+            browser.close()
+    finally:
+        os.remove(rendu)
+
 def calculer_gain_24h(maintenant: datetime, adherents_actuels: int, csv_file: str = CSV_FILE) -> int:
     """Calcule le gain réel sur 24h glissantes par interpolation linéaire."""
     if not os.path.isfile(csv_file):
@@ -963,18 +1002,13 @@ def run():
             f"▫️ Projection : {eta_texte}"
         )
 
-        generer_carte_visuelle(
+        generer_carte_partage(
             adherents=adherents,
             gain_24h=gain_24h,
             gain_7j=gain_7j,
-            cadence_kpi=cadence_kpi,
-            badge_momentum=badge_momentum,
             cap_precedent=cap_precedent,
             prochain_cap=prochain_cap,
-            eta_court=eta_court,
             maintenant=maintenant,
-            points_api=points_api,
-            output_path=CHART_FILE,
         )
 
         url_tweet = None
@@ -983,7 +1017,7 @@ def run():
             if dernier_tweet:
                 minutes_depuis_tweet = (maintenant - datetime.fromisoformat(dernier_tweet)).total_seconds() / 60
             if franchissement_5k or minutes_depuis_tweet is None or minutes_depuis_tweet >= X_INTERVALLE_MIN:
-                url_tweet = publier_sur_x(tweet_texte, CHART_FILE)
+                url_tweet = publier_sur_x(tweet_texte, CARTE_PARTAGE)
                 if url_tweet:
                     dernier_tweet = maintenant_iso
             else:
@@ -998,14 +1032,14 @@ def run():
             email_corps = (
                 f"Bonjour,\n\n"
                 f"Nouveau point d'étape disponible. Le visuel est en pièce jointe :\n"
-                f"- stats_card.png (Baromètre)\n\n"
+                f"- partage.png (Baromètre)\n\n"
                 f"===================================================\n"
                 f"--- TWEET ---\n"
                 f"===================================================\n"
                 f"{tweet_texte}\n\n"
                 f"{ligne_lien}"
             )
-            envoyer_email(titre_sujet, email_corps, CHART_FILE)
+            envoyer_email(titre_sujet, email_corps, CARTE_PARTAGE)
 
         ecrire_etat(maintenant_iso, adherents, dernier_palier, dernier_tweet)
     else:
