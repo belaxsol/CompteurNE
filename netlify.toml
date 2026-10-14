@@ -1,0 +1,11 @@
+# Site statique : aucun build, on publie directement le dossier site/
+[build]
+  publish = "site"
+  command = ""
+  # Le bot commite les données toutes les 15 min : on ne redéploie que si le site change
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- site/ netlify.toml"
+
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
