@@ -29,6 +29,17 @@ SMTP_USER = os.getenv("GMAIL_USER")
 SMTP_PASS = os.getenv("GMAIL_APP_PASS")
 DESTINATAIRE = os.getenv("EMAIL_DESTINATAIRE", SMTP_USER)
 
+# --- Publication automatique sur X (API v2, OAuth 1.0a utilisateur) ---
+X_API_KEY = os.getenv("X_API_KEY")
+X_API_SECRET = os.getenv("X_API_SECRET")
+X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN")
+X_ACCESS_SECRET = os.getenv("X_ACCESS_SECRET")
+X_ACTIF = all([X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET])
+# Délai minimum entre deux posts (hors franchissement d'un cap de 5k) pour respecter les quotas X
+X_INTERVALLE_MIN = int(os.getenv("X_INTERVALLE_MIN", "120"))
+URL_X_MEDIA = "https://api.x.com/2/media/upload"
+URL_X_TWEET = "https://api.x.com/2/tweets"
+
 MOIS_FR = ["", "janv.", "févr.", "mars", "avr.", "mai", "juin", 
            "juil.", "août", "sept.", "oct.", "nov.", "déc."]
 
@@ -177,14 +188,17 @@ def lire_etat():
             pass
     return None
 
-def ecrire_etat(iso_date, adherents, dernier_palier):
+def ecrire_etat(iso_date, adherents, dernier_palier, dernier_tweet=None):
     os.makedirs("data", exist_ok=True)
+    etat = {
+        "timestamp": iso_date,
+        "adherents": adherents,
+        "dernier_palier": dernier_palier
+    }
+    if dernier_tweet:
+        etat["dernier_tweet"] = dernier_tweet
     with open(STATE_FILE, "w", encoding="utf-8") as f:
-        json.dump({
-            "timestamp": iso_date,
-            "adherents": adherents,
-            "dernier_palier": dernier_palier
-        }, f, indent=2)
+        json.dump(etat, f, indent=2)
 
 def generer_carte_visuelle(
     adherents: int,
@@ -834,9 +848,46 @@ def envoyer_email(sujet, contenu, image_path):
         server.sendmail(SMTP_USER, [DESTINATAIRE], msg.as_string())
     print(f"E-mail envoyé avec succès à {DESTINATAIRE}", flush=True)
 
+def publier_sur_x(texte, image_path):
+    """Publie le tweet (avec la carte en image si possible). Renvoie l'URL du post, ou None."""
+    from requests_oauthlib import OAuth1
+
+    auth = OAuth1(X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET)
+    payload = {"text": texte}
+
+    if os.path.isfile(image_path):
+        try:
+            with open(image_path, "rb") as f:
+                resp = requests.post(
+                    URL_X_MEDIA,
+                    auth=auth,
+                    files={"media": (os.path.basename(image_path), f, "image/png")},
+                    data={"media_category": "tweet_image"},
+                    timeout=60,
+                )
+            resp.raise_for_status()
+            media_id = resp.json()["data"]["id"]
+            payload["media"] = {"media_ids": [media_id]}
+        except (requests.exceptions.RequestException, KeyError, ValueError) as e:
+            print(f"Upload de l'image sur X impossible, post sans image : {e}", flush=True)
+
+    try:
+        resp = requests.post(URL_X_TWEET, auth=auth, json=payload, timeout=30)
+        resp.raise_for_status()
+        tweet_id = resp.json()["data"]["id"]
+    except (requests.exceptions.RequestException, KeyError, ValueError) as e:
+        detail = getattr(getattr(e, "response", None), "text", "")
+        print(f"Erreur publication X : {e} {detail}", flush=True)
+        return None
+
+    url = f"https://x.com/i/status/{tweet_id}"
+    print(f"Tweet publié : {url}", flush=True)
+    return url
+
 def run():
-    if not all([SMTP_USER, SMTP_PASS]):
-        print("Erreur : identifiants SMTP manquants.", flush=True)
+    email_actif = all([SMTP_USER, SMTP_PASS])
+    if not email_actif and not X_ACTIF:
+        print("Erreur : ni identifiants SMTP ni identifiants X configurés.", flush=True)
         sys.exit(1)
 
     adherents, gain_7j, date_maj, points_api = extraire_donnees()
@@ -864,6 +915,7 @@ def run():
     dernier_total = etat.get("adherents", adherents)
     derniere_date = datetime.fromisoformat(etat["timestamp"])
     dernier_palier = etat.get("dernier_palier", (dernier_total // PAS_PALIER) * PAS_PALIER)
+    dernier_tweet = etat.get("dernier_tweet")
 
     delta_heures = (maintenant - derniere_date).total_seconds() / 3600
     doit_notifier = False
@@ -925,19 +977,37 @@ def run():
             output_path=CHART_FILE,
         )
 
-        email_corps = (
-            f"Bonjour,\n\n"
-            f"Nouveau point d'étape disponible. Le visuel est en pièce jointe :\n"
-            f"- stats_card.png (Baromètre)\n\n"
-            f"===================================================\n"
-            f"--- TWEET ---\n"
-            f"===================================================\n"
-            f"{tweet_texte}\n\n"
-            f"Lien : https://twitter.com/intent/tweet?text={requests.utils.quote(tweet_texte)}\n\n"
-        )
+        url_tweet = None
+        if X_ACTIF:
+            minutes_depuis_tweet = None
+            if dernier_tweet:
+                minutes_depuis_tweet = (maintenant - datetime.fromisoformat(dernier_tweet)).total_seconds() / 60
+            if franchissement_5k or minutes_depuis_tweet is None or minutes_depuis_tweet >= X_INTERVALLE_MIN:
+                url_tweet = publier_sur_x(tweet_texte, CHART_FILE)
+                if url_tweet:
+                    dernier_tweet = maintenant_iso
+            else:
+                print(f"Post X ignoré : dernier tweet il y a {minutes_depuis_tweet:.0f} min "
+                      f"(< {X_INTERVALLE_MIN} min).", flush=True)
 
-        envoyer_email(titre_sujet, email_corps, CHART_FILE)
-        ecrire_etat(maintenant_iso, adherents, dernier_palier)
+        if email_actif:
+            if url_tweet:
+                ligne_lien = f"Publié automatiquement sur X : {url_tweet}\n\n"
+            else:
+                ligne_lien = f"Lien : https://twitter.com/intent/tweet?text={requests.utils.quote(tweet_texte)}\n\n"
+            email_corps = (
+                f"Bonjour,\n\n"
+                f"Nouveau point d'étape disponible. Le visuel est en pièce jointe :\n"
+                f"- stats_card.png (Baromètre)\n\n"
+                f"===================================================\n"
+                f"--- TWEET ---\n"
+                f"===================================================\n"
+                f"{tweet_texte}\n\n"
+                f"{ligne_lien}"
+            )
+            envoyer_email(titre_sujet, email_corps, CHART_FILE)
+
+        ecrire_etat(maintenant_iso, adherents, dernier_palier, dernier_tweet)
     else:
         print(f"Pas d'alerte requise ({adherents} adhérents).", flush=True)
 

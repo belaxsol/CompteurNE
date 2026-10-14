@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compteur d'adhésions NE</title>
+<meta name="description" content="Nombre d'adhérents à Nouvelle Énergie, mis à jour en temps réel.">
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #0f1b3d;
+    --muted: #6b7591;
+    --line: #e3e8f2;
+    --blue: #1f5eff;
+    --blue-soft: rgba(31, 94, 255, .12);
+    --green: #11a36a;
+    --red: #e5243b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1122;
+      --card: #131b33;
+      --ink: #eef2ff;
+      --muted: #8f9ab8;
+      --line: #24304f;
+      --blue: #5b8cff;
+      --blue-soft: rgba(91, 140, 255, .18);
+      --green: #35c98d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .flag { height: 5px; background: linear-gradient(90deg, #1b2f8f 33%, #fff 33% 66%, var(--red) 66%); }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .eyebrow { color: var(--blue); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .live {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); background: var(--card);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); animation: pulse 1.6s infinite; }
+  .live.stale .dot { background: var(--muted); animation: none; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229,36,59,.5); } 70% { box-shadow: 0 0 0 9px rgba(229,36,59,0); } 100% { box-shadow: 0 0 0 0 rgba(229,36,59,0); } }
+  .total { font-size: clamp(56px, 14vw, 112px); font-weight: 800; letter-spacing: -.03em; line-height: 1; margin: 20px 0 6px; font-variant-numeric: tabular-nums; }
+  .sub { color: var(--muted); font-size: 18px; margin: 0 0 28px; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .kpi-val { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kpi-lbl { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
+  .green { color: var(--green); }
+  .blue { color: var(--blue); }
+  svg { display: block; width: 100%; height: auto; }
+  .axis { fill: var(--muted); font-size: 11px; }
+  .cap-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .cap-pct { color: var(--blue); font-weight: 800; font-size: 20px; }
+  .bar { height: 12px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, #1b2f8f, var(--blue)); border-radius: 999px; transition: width .8s ease; }
+  .cap-foot { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  footer a { color: inherit; }
+  .bump { animation: bump .6s ease; }
+  @keyframes bump { 40% { color: var(--green); } }
+  @media (max-width: 560px) {
+    .kpis { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="flag"></div>
+<main>
+  <header>
+    <span class="eyebrow" id="date">Adhérents</span>
+    <span class="live" id="live"><span class="dot"></span><span id="live-txt">En direct</span></span>
+  </header>
+
+  <div class="total" id="total">—</div>
+  <p class="sub">adhérents à Nouvelle Énergie</p>
+
+  <section class="kpis">
+    <div class="card"><div class="kpi-val green" id="k24">—</div><div class="kpi-lbl">Dernières 24 h</div></div>
+    <div class="card"><div class="kpi-val blue" id="k7">—</div><div class="kpi-lbl">Sur 7 jours</div></div>
+    <div class="card"><div class="kpi-val" id="kh">—</div><div class="kpi-lbl">Adhésions / heure</div></div>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <svg id="chart" viewBox="0 0 800 260" role="img" aria-label="Évolution du nombre d'adhérents"></svg>
+  </section>
+
+  <section class="card">
+    <div class="cap-head"><strong>Cap <span id="cap">—</span></strong><span class="cap-pct" id="cap-pct">—</span></div>
+    <div class="bar"><div id="cap-bar" style="width:0"></div></div>
+    <div class="cap-foot" id="cap-foot">—</div>
+  </section>
+
+  <footer>
+    <span>Données : <a href="https://adherent.unenouvelleenergie.fr/donnees" rel="noopener">unenouvelleenergie.fr</a></span>
+    <span id="maj">—</span>
+  </footer>
+</main>
+
+<script>
+const URL_LIVE = "https://adherent.unenouvelleenergie.fr/donnees/adherents.json";
+const URL_HISTO = "https://adherent.unenouvelleenergie.fr/donnees/adherents/historique.json";
+const POLL_MS = 60000;        // l'API est mise en cache 60 s côté serveur
+const PAS_CAP = 5000;
+const JOURS_GRAPHE = 45;
+const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+const fmt = n => Math.round(n).toLocaleString("fr-FR").replace(/ | /g, " ");
+const signe = n => (n >= 0 ? "+" : "") + fmt(n);
+const $ = id => document.getElementById(id);
+
+let historique = [];          // [{t: Date, v: number}] un point par jour
+let echantillons = [];        // relevés live de la session, pour la cadence horaire
+let affiche = 0;
+
+function animer(cible) {
+  const depart = affiche, debut = performance.now(), duree = 900;
+  if (depart && cible !== depart) { $("total").classList.remove("bump"); void $("total").offsetWidth; $("total").classList.add("bump"); }
+  function pas(now) {
+    const p = Math.min(1, (now - debut) / duree);
+    affiche = depart + (cible - depart) * (1 - Math.pow(1 - p, 3));
+    $("total").textContent = fmt(affiche);
+    if (p < 1) requestAnimationFrame(pas); else affiche = cible;
+  }
+  requestAnimationFrame(pas);
+}
+
+// Valeur interpolée de la série journalière à un instant donné
+function valeurA(t, serie) {
+  if (!serie.length || t <= serie[0].t) return serie.length ? serie[0].v : null;
+  for (let i = 1; i < serie.length; i++) {
+    if (t <= serie[i].t) {
+      const a = serie[i - 1], b = serie[i];
+      return a.v + (b.v - a.v) * (t - a.t) / (b.t - a.t);
+    }
+  }
+  return serie[serie.length - 1].v;
+}
+
+function dessinerGraphe(serie) {
+  const W = 800, H = 260, G = 44, D = 56, Hh = 16, B = 30;
+  const xs = serie.map(p => +p.t), ys = serie.map(p => p.v);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const yMin = Math.floor(Math.min(...ys) / 5000) * 5000, yMax = Math.ceil(Math.max(...ys) / 5000) * 5000 || 1;
+  const X = t => G + (t - x0) / (x1 - x0 || 1) * (W - G - D);
+  const Y = v => H - B - (v - yMin) / (yMax - yMin || 1) * (H - B - Hh);
+  let svg = "";
+  for (let v = yMin; v <= yMax; v += 5000) {
+    svg += `<line x1="${G}" x2="${W - D}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`;
+    svg += `<text class="axis" x="${W - D + 8}" y="${Y(v) + 4}">${v / 1000}k</text>`;
+  }
+  const pas = Math.max(1, Math.round(serie.length / 6));
+  serie.forEach((p, i) => {
+    if (i % pas === 0) svg += `<text class="axis" x="${X(+p.t)}" y="${H - 8}" text-anchor="middle">${p.t.getDate()} ${MOIS[p.t.getMonth()]}</text>`;
+  });
+  const pts = serie.map(p => `${X(+p.t).toFixed(1)},${Y(p.v).toFixed(1)}`);
+  svg += `<path d="M${pts[0]} L${pts.join(" L")} L${X(x1)},${H - B} L${X(x0)},${H - B} Z" fill="var(--blue-soft)"/>`;
+  svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round"/>`;
+  const last = serie[serie.length - 1];
+  svg += `<circle cx="${X(+last.t)}" cy="${Y(last.v)}" r="9" fill="none" stroke="var(--red)" stroke-width="2" opacity=".5"/>`;
+  svg += `<circle cx="${X(+last.t)}" cy="${Y(last.v)}" r="5" fill="var(--red)"/>`;
+  $("chart").innerHTML = svg;
+}
+
+async function chargerHistorique() {
+  const r = await fetch(URL_HISTO, { cache: "no-cache" });
+  const j = await r.json();
+  historique = (j.jours || [])
+    // La valeur d'un jour correspond au total en fin de journée (≈ minuit UTC suivant)
+    .map(d => ({ t: new Date(Date.parse(`${d.jour || d.date}T00:00:00Z`) + 86400e3), v: d.adherents }))
+    .filter(p => !isNaN(p.t) && Number.isFinite(p.v));
+}
+
+function cadenceHoraire(total, maj) {
+  // Priorité aux relevés live de la session (≥ 20 min d'écart), sinon tendance des 24 h
+  const ancien = echantillons.find(e => maj - e.t >= 20 * 60e3);
+  if (ancien) return (total - ancien.v) / ((maj - ancien.t) / 3600e3);
+  const v24 = valeurA(new Date(maj - 24 * 3600e3), historique);
+  return v24 == null ? null : (total - v24) / 24;
+}
+
+async function rafraichir() {
+  try {
+    const r = await fetch(URL_LIVE, { cache: "no-cache" });
+    const j = await r.json();
+    const total = j.adherents, maj = new Date(j.mis_a_jour);
+    if (!historique.length || maj - historique[historique.length - 1].t > 30 * 3600e3) await chargerHistorique();
+
+    if (!echantillons.length || echantillons[echantillons.length - 1].v !== total) echantillons.push({ t: maj, v: total });
+    animer(total);
+
+    const g24 = valeurA(new Date(maj - 24 * 3600e3), historique);
+    const g7 = valeurA(new Date(maj - 7 * 24 * 3600e3), historique);
+    $("k24").textContent = g24 == null ? "—" : signe(total - g24);
+    $("k7").textContent = g7 == null ? "—" : signe(total - g7);
+    const h = cadenceHoraire(total, maj);
+    $("kh").textContent = h == null ? "—" : "~" + fmt(h);
+
+    const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = capBas + PAS_CAP;
+    const pct = (total - capBas) / PAS_CAP * 100;
+    const parJour = g7 == null ? 0 : (total - g7) / 7;
+    let proj = "—";
+    if (parJour > 0) { const d = new Date(+maj + (capHaut - total) / parJour * 86400e3); proj = `~${d.getDate()} ${MOIS[d.getMonth()]}`; }
+    $("cap").textContent = fmt(capHaut);
+    $("cap-pct").textContent = Math.floor(pct) + " %";
+    $("cap-bar").style.width = pct.toFixed(1) + "%";
+    $("cap-foot").textContent = `Tranche ${fmt(capBas)} → ${fmt(capHaut)} · Reste ${fmt(capHaut - total)} · Projection ${proj}`;
+
+    const debut = new Date(+maj - JOURS_GRAPHE * 86400e3);
+    const serie = historique.filter(p => p.t >= debut && p.t < maj).concat([{ t: maj, v: total }]);
+    if (serie.length > 1) dessinerGraphe(serie);
+
+    $("date").textContent = `Adhérents · ${maj.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
+    $("maj").textContent = `Mis à jour à ${maj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+    $("live").classList.remove("stale");
+    $("live-txt").textContent = "En direct";
+  } catch (e) {
+    console.error(e);
+    $("live").classList.add("stale");
+    $("live-txt").textContent = "Hors ligne";
+  }
+}
+
+rafraichir();
+setInterval(rafraichir, POLL_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) rafraichir(); });
+</script>
+</body>
+</html>
