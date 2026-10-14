@@ -85,16 +85,6 @@
     text-decoration: none; cursor: pointer; transition: background .15s, color .15s; }
   .ne-share__btn:hover, .ne-share__btn:focus-visible { background: var(--navy); color: #fff; }
   .ne-share__btn[disabled] { opacity: .5; cursor: wait; }
-  /* Fenêtre d'aide au partage sur X (ordinateur) */
-  .guide { margin: auto; border: 0; border-radius: 16px; padding: 24px; width: min(520px, calc(100vw - 32px)); color: var(--navy); font-family: inherit; }
-  .guide::backdrop { background: rgba(13, 18, 60, .6); }
-  .guide img { width: 100%; height: auto; border-radius: 10px; display: block; }
-  .guide h2 { font-size: 20px; margin: 18px 0 10px; }
-  .guide ol { padding-left: 22px; line-height: 1.6; font-size: 16px; }
-  .guide ol b { font-weight: 700; }
-  .guide-etat { min-height: 22px; margin-top: 12px; font-weight: 600; color: #11845a; }
-  .guide-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-  .guide-actions .ne-share__btn:first-child { background: var(--navy); color: #fff; }
   .meta { font-size: 13px; color: #7a80a6; }
   .meta a { color: inherit; }
 
@@ -167,21 +157,6 @@
   <div class="meta">Données : <a href="https://adherent.unenouvelleenergie.fr/donnees" rel="noopener">unenouvelleenergie.fr</a> · <span id="maj">—</span></div>
   <div class="meta">Géré par <a href="https://x.com/germaineinvest" target="_blank" rel="noopener">@germaineinvest</a> et <a href="https://x.com/RomainRobi_" target="_blank" rel="noopener">@RomainRobi_</a></div>
 </section>
-
-<dialog class="guide" id="guide" aria-labelledby="guide-titre">
-  <img id="guide-img" alt="Image du compteur à joindre au post">
-  <h2 id="guide-titre">Partager sur X avec l'image</h2>
-  <ol>
-    <li>Cliquez sur <b>Ouvrir X</b> : l'image est copiée et le post est pré-rempli.</li>
-    <li>Dans X, cliquez dans le texte puis faites <b>Ctrl+V</b> (⌘+V sur Mac).</li>
-    <li>L'image s'ajoute au post : cliquez sur <b>Poster</b>.</li>
-  </ol>
-  <div class="guide-etat" id="guide-etat" role="status" aria-live="polite"></div>
-  <div class="guide-actions">
-    <button class="ne-share__btn" id="guide-go" type="button">Ouvrir X</button>
-    <button class="ne-share__btn" id="guide-fermer" type="button">Fermer</button>
-  </div>
-</dialog>
 
 <script>
 const URL_LIVE = "https://adherent.unenouvelleenergie.fr/donnees/adherents.json";
@@ -414,13 +389,13 @@ async function preparerImage() {
 }
 
 // ---------- Partage ----------
-// X : un seul lien (adhésion) dans le post, l'image est jointe comme vraie photo (Ctrl+V sur ordinateur,
-// jointe automatiquement sur mobile). Les sites ne peuvent pas joindre de fichier à un post X eux-mêmes.
-// Facebook : le lien /partage/<total> affiche la carte du compteur (netlify/functions/og.mjs) et mène à l'adhésion.
-const lienPartage = () => `${ORIGINE}/partage/${etat.total}`;
-const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie ! Rejoignez le mouvement 👉 ${LIEN_ADHESION}`;
+// Tout est automatique : le post contient un seul lien, /partage/<total>, dont la carte (image du compteur
+// générée par netlify/functions/og.mjs) s'affiche sous le post sur X et Facebook. Un clic sur la carte
+// mène au lien d'adhésion. Sur mobile, l'image est en plus jointe directement au post.
+let lienCourant = "";
+const nouveauLien = () => (lienCourant = `${ORIGINE}/partage/${etat.total}?v=${Date.now().toString(36)}`);
+const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie ! Rejoignez le mouvement 👉`;
 const fichier = () => new File([imageBlob], `nouvelle-energie-${etat.total}.png`, { type: "image/png" });
-const urlX = () => "https://x.com/intent/post?text=" + encodeURIComponent(texteTweet());
 
 function telecharger() {
   const a = document.createElement("a");
@@ -429,55 +404,34 @@ function telecharger() {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+// Fait générer la page et l'image tout de suite, pour qu'elles soient en cache quand X ou Facebook viennent les lire
+function prechauffer() {
+  fetch(lienCourant, { mode: "no-cors" }).catch(() => {});
+  fetch(`${ORIGINE}/og.png?n=${etat.total}`, { mode: "no-cors" }).catch(() => {});
+}
+
 // Mobile : feuille de partage native avec l'image jointe (l'utilisateur choisit X ou Facebook)
 async function partageNatif() {
   if (!imageBlob || !matchMedia("(pointer: coarse)").matches) return false;
   const f = fichier();
   if (!navigator.canShare?.({ files: [f] })) return false;
-  try { await navigator.share({ files: [f], text: texteTweet() }); }
+  try { await navigator.share({ files: [f], text: `${texteTweet()} ${LIEN_ADHESION}` }); }
   catch (e) { if (e.name !== "AbortError") return false; }
   return true;
 }
 
-async function copierImage() {
-  if (!imageBlob) return false;
-  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": imageBlob })]); return true; }
-  catch { return false; }
-}
-
-// Ordinateur : fenêtre d'aide, puis copie de l'image et ouverture de X au clic sur « Ouvrir X »
-let apercuUrl;
-function ouvrirGuide() {
-  if (apercuUrl) URL.revokeObjectURL(apercuUrl);
-  apercuUrl = URL.createObjectURL(imageBlob);
-  $("guide-img").src = apercuUrl;
-  $("guide-etat").textContent = "";
-  $("guide").showModal();
-}
-
-$("guide-go").addEventListener("click", async () => {
-  // Copie avant d'ouvrir X : une fois l'onglet X au premier plan, la page n'a plus accès au presse-papiers
-  const copie = await copierImage();
-  if (!copie) telecharger();
-  $("guide-etat").textContent = copie
-    ? "Image copiée ✓ Dans X, cliquez dans le texte puis Ctrl+V (⌘+V)."
-    : "Image téléchargée ✓ Dans X, ajoutez-la avec l'icône photo.";
-  open(urlX(), "_blank", "noopener");
-});
-$("guide-fermer").addEventListener("click", () => $("guide").close());
-
 $("share-x").addEventListener("click", async () => {
   if (!etat) return;
+  nouveauLien(); prechauffer();
   if (await partageNatif()) return;
-  if (imageBlob) ouvrirGuide();
-  else open(urlX(), "_blank", "noopener");
+  open("https://x.com/intent/post?text=" + encodeURIComponent(texteTweet()) + "&url=" + encodeURIComponent(lienCourant), "_blank", "noopener");
 });
 
 $("share-fb").addEventListener("click", async () => {
   if (!etat) return;
-  fetch(lienPartage(), { mode: "no-cors" }).catch(() => {});   // fait préparer la carte avant que Facebook la lise
+  nouveauLien(); prechauffer();
   if (await partageNatif()) return;
-  open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(lienPartage()), "_blank", "noopener");
+  open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(lienCourant), "_blank", "noopener");
 });
 
 $("share-dl").addEventListener("click", () => { if (imageBlob) telecharger(); });

@@ -11,7 +11,8 @@ export default async (req, context) => {
   const titre = Number.isFinite(n) && n > 0
     ? `${fmt(n)} adhérents à Nouvelle Énergie`
     : "Compteur d'adhésions à Nouvelle Énergie";
-  const lien = `${origine}/partage/${Number.isFinite(n) ? n : ""}`;
+  const { pathname, search } = new URL(req.url);
+  const lien = `${origine}${pathname}${search}`;   // adresse exacte partagée (le ?v= rend chaque partage unique pour X)
   const image = `${origine}/og.png?n=${Number.isFinite(n) ? n : Date.now()}`;
 
   const html = `<!doctype html>
