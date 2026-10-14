@@ -1,0 +1,10 @@
+{
+  "name": "compteur-ne",
+  "private": true,
+  "type": "module",
+  "description": "Fonctions Netlify : image de partage du compteur (og:image) générée en temps réel",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.57.2"
+  }
+}
