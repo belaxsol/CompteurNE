@@ -9,8 +9,8 @@
 <meta property="og:description" content="Suivez le compteur en direct et rejoignez le mouvement.">
 <meta property="og:url" content="https://ne-compteur.netlify.app/">
 <meta property="og:image" content="https://ne-compteur.netlify.app/og.png">
-<meta property="og:image:width" content="2400">
-<meta property="og:image:height" content="1260">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -232,15 +232,15 @@ async function rafraichir() {
     const v24 = valeurA(new Date(maj - 24 * 3600e3), historique);
     const v7 = valeurA(new Date(maj - 7 * 24 * 3600e3), historique);
     const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = capBas + PAS_CAP;
-    const pct = (total - capBas) / PAS_CAP * 100;
+    const pct = total / capHaut * 100;          // part de l'objectif déjà atteinte
 
     etat = {
       total,
       date: `${maj.getDate()} ${MOIS[maj.getMonth()]} ${maj.getFullYear()}`,
       d24: v24 == null ? "—" : signe(total - v24),
       d7: v7 == null ? "—" : signe(total - v7),
-      cap: `De ${fmt(capBas)} à ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
-      pct: Math.floor(pct) + " %",
+      cap: `Objectif ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
+      pct: (Math.floor(pct * 10) / 10).toLocaleString("fr-FR", { minimumFractionDigits: 1 }) + " %",
       pctN: pct,
     };
 
@@ -423,14 +423,24 @@ async function copierImage() {
 let infoTimer;
 function info(msg) { $("info").textContent = msg; clearTimeout(infoTimer); infoTimer = setTimeout(() => $("info").textContent = "", 10000); }
 
+// Fait générer la carte tout de suite, pour qu'elle soit prête quand X ou Facebook viennent la lire
+function prechaufferCarte() {
+  fetch(lienPartage(), { mode: "no-cors" }).catch(() => {});
+  fetch(`${ORIGINE}/og.png?n=${etat.total}`, { mode: "no-cors" }).catch(() => {});
+}
+
 $("share-x").addEventListener("click", async () => {
-  if (!etat || await partageNatif()) return;
+  if (!etat) return;
+  prechaufferCarte();
+  if (await partageNatif()) return;
   open("https://x.com/intent/post?text=" + encodeURIComponent(texteTweet()) + "&url=" + encodeURIComponent(lienPartage()), "_blank", "noopener");
   if (await copierImage()) info("Image copiée : Ctrl+V (⌘+V) dans le post pour la joindre. Sinon, la carte s'affichera sous le post une fois publié.");
 });
 
 $("share-fb").addEventListener("click", async () => {
-  if (!etat || await partageNatif()) return;
+  if (!etat) return;
+  prechaufferCarte();
+  if (await partageNatif()) return;
   open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(lienPartage()), "_blank", "noopener");
   if (await copierImage()) info("Image copiée : Ctrl+V (⌘+V) pour la joindre à votre publication Facebook.");
 });

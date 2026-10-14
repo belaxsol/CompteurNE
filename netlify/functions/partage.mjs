@@ -23,8 +23,8 @@ export default async (req, context) => {
 <meta property="og:title" content="${titre}">
 <meta property="og:description" content="Suivez le compteur en direct et rejoignez le mouvement.">
 <meta property="og:image" content="${image}">
-<meta property="og:image:width" content="2400">
-<meta property="og:image:height" content="1260">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${titre}">
 <meta name="twitter:image" content="${image}">

@@ -62,11 +62,11 @@ def formater_nombre(n: int) -> str:
     return f"{n:,}".replace(",", " ")
 
 def generer_jauge_texte(actuel: int, palier_bas: int, palier_haut: int, taille: int = 10) -> str:
-    progression = (actuel - palier_bas) / (palier_haut - palier_bas)
+    progression = actuel / palier_haut          # part de l'objectif déjà atteinte
     progression = max(0.0, min(1.0, progression))
     pleins = int(round(progression * taille))
     vides = taille - pleins
-    pct = int(progression * 100)
+    pct = f"{int(progression * 1000) / 10:.1f}".replace(".", ",")
     return f"{'▓' * pleins}{'░' * vides} {pct} %"
 
 def calculer_cadence_recente(csv_file: str = CSV_FILE) -> tuple[str, str]:
@@ -787,15 +787,15 @@ def generer_carte_partage(adherents, gain_24h, gain_7j, cap_precedent, prochain_
     with open(TEMPLATE_PARTAGE, "r", encoding="utf-8") as f:
         html = f.read()
 
-    pct = (adherents - cap_precedent) / (prochain_cap - cap_precedent) * 100
+    pct = adherents / prochain_cap * 100      # part de l'objectif déjà atteinte
     date_fr = maintenant.astimezone(TZ_FR)
     valeurs = {
         "{{DATE}}": f"{date_fr.day} {MOIS_FR[date_fr.month].upper()} {date_fr.year}",
         "{{TOTAL}}": formater_nombre(adherents),
         "{{D24}}": f"{'+' if gain_24h >= 0 else '-'}{formater_nombre(abs(gain_24h))}",
         "{{D7}}": f"{'+' if gain_7j >= 0 else '-'}{formater_nombre(abs(gain_7j))}",
-        "{{CAP}}": f"De {formater_nombre(cap_precedent)} à {formater_nombre(prochain_cap)} · reste {formater_nombre(prochain_cap - adherents)}",
-        "{{PCT}}": f"{int(pct)} %",
+        "{{CAP}}": f"Objectif {formater_nombre(prochain_cap)} · reste {formater_nombre(prochain_cap - adherents)}",
+        "{{PCT}}": f"{int(pct * 10) / 10:.1f} %".replace(".", ","),
         "{{PCTN}}": f"{pct:.1f}",
     }
     for cle, val in valeurs.items():

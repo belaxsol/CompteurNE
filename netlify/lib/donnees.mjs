@@ -33,7 +33,7 @@ export async function lireDonnees() {
   const v24 = valeurA(+maj - 24 * 3600e3, serie);
   const v7 = valeurA(+maj - 7 * 24 * 3600e3, serie);
   const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = capBas + PAS_CAP;
-  const pct = (total - capBas) / PAS_CAP * 100;
+  const pct = total / capHaut * 100;          // part de l'objectif déjà atteinte
 
   const parties = Object.fromEntries(new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Europe/Paris", day: "numeric", month: "numeric", year: "numeric",
@@ -44,8 +44,8 @@ export async function lireDonnees() {
     date: `${+parties.day} ${MOIS[+parties.month - 1]} ${parties.year}`,
     d24: v24 == null ? "—" : signe(total - v24),
     d7: v7 == null ? "—" : signe(total - v7),
-    cap: `De ${fmt(capBas)} à ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
-    pct: Math.floor(pct) + " %",
+    cap: `Objectif ${fmt(capHaut)} · reste ${fmt(capHaut - total)}`,
+    pct: (Math.floor(pct * 10) / 10).toLocaleString("fr-FR", { minimumFractionDigits: 1 }) + " %",
     pctN: pct,
   };
 }

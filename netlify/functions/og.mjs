@@ -1,5 +1,5 @@
 // Image de partage (og:image) du compteur, générée avec les chiffres du moment.
-// Même mise en page que site/compteur-carte-modele.html, rendue en PNG 2400x1260.
+// Même mise en page que site/compteur-carte-modele.html, rendue en PNG 1200x630 (format conseillé par X et Facebook).
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { fmt, lireDonnees } from "../lib/donnees.mjs";
@@ -104,7 +104,7 @@ export default async (req) => {
     const { polices, photo } = await chargerRessources(new URL(req.url).origin);
     const d = await lireDonnees();
     const svgCarte = await satori(carte({ ...d, total: fmt(d.total) }, photo), { width: W, height: H, fonts: polices });
-    const png = new Resvg(svgCarte, { fitTo: { mode: "width", value: W * 2 } }).render().asPng();
+    const png = new Resvg(svgCarte, { fitTo: { mode: "width", value: W } }).render().asPng();
     return new Response(png, {
       headers: {
         "Content-Type": "image/png",
