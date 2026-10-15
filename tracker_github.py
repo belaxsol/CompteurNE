@@ -61,6 +61,11 @@ TZ_FR = timezone(timedelta(hours=2))
 def formater_nombre(n: int) -> str:
     return f"{n:,}".replace(",", " ")
 
+def poids_tweet(texte: str) -> int:
+    """Longueur comptée par X : 1 pour le latin et la ponctuation courante, 2 pour le reste (emojis, symboles)."""
+    simples = [(0, 4351), (8192, 8205), (8208, 8223), (8242, 8247)]
+    return sum(1 if any(a <= ord(c) <= b for a, b in simples) else 2 for c in texte)
+
 def generer_jauge_texte(actuel: int, palier_bas: int, palier_haut: int, taille: int = 10) -> str:
     progression = actuel / palier_haut          # part de l'objectif déjà atteinte
     progression = max(0.0, min(1.0, progression))
@@ -999,8 +1004,12 @@ def run():
             f"{momentum_txt}\n\n"
             f"Cap {cap_precedent // 1000}k ➔ {prochain_cap // 1000}k ({jauge_txt}) :\n"
             f"▫️ Reste : {formater_nombre(reste_avant_cap)} adhésions\n"
-            f"▫️ Projection : {eta_texte}"
+            f"▫️ Projection : {eta_texte}\n\n"
+            f"#ilsepassequelquechose"
         )
+        if poids_tweet(tweet_texte) > 280:
+            # Limite X dépassée (gros chiffres) : on retire la ligne de projection
+            tweet_texte = tweet_texte.replace(f"\n▫️ Projection : {eta_texte}", "")
 
         generer_carte_partage(
             adherents=adherents,

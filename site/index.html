@@ -96,6 +96,14 @@
     text-decoration: none; cursor: pointer; transition: background .15s, color .15s; }
   .ne-share__btn:hover, .ne-share__btn:focus-visible { background: var(--navy); color: #fff; }
   .ne-share__btn[disabled] { opacity: .5; cursor: wait; }
+  .adherer { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: min(100%, 420px);
+    padding: 16px 28px; border-radius: 12px; background: var(--khaki); color: var(--navy); font-size: 19px; font-weight: 800;
+    letter-spacing: .02em; text-decoration: none; box-shadow: 0 6px 18px rgba(29,37,122,.18); transition: transform .15s, box-shadow .15s; }
+  .adherer:hover, .adherer:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(29,37,122,.25); }
+  .apercu { margin: auto; border: 0; border-radius: 16px; padding: 16px; width: min(560px, calc(100vw - 32px)); text-align: center; font-family: inherit; color: var(--navy); }
+  .apercu::backdrop { background: rgba(13,18,60,.7); }
+  .apercu img { width: 100%; height: auto; border-radius: 10px; display: block; -webkit-touch-callout: default; }
+  .apercu p { margin: 12px 0; font-weight: 600; }
   .meta { font-size: 13px; color: #7a80a6; }
   .meta a { color: inherit; }
 
@@ -150,6 +158,7 @@
 </section>
 
 <section class="share-zone">
+  <a class="adherer" href="https://soutenir.unenouvelleenergie.fr/p/V52CQY5T" target="_blank" rel="noopener">Adhérer à Nouvelle Énergie <span aria-hidden="true">→</span></a>
   <div class="ne-share">
     <span class="ne-share__label">Partager</span>
     <button class="ne-share__btn" id="share-x" type="button" disabled>
@@ -168,6 +177,12 @@
   <div class="meta">Données : <a href="https://adherent.unenouvelleenergie.fr/donnees" rel="noopener">unenouvelleenergie.fr</a> · <span id="maj">—</span></div>
   <div class="meta">Géré par <a href="https://x.com/germaineinvest" target="_blank" rel="noopener">@germaineinvest</a> et <a href="https://x.com/RomainRobi_" target="_blank" rel="noopener">@RomainRobi_</a></div>
 </section>
+
+<dialog class="apercu" id="apercu" aria-label="Image du compteur">
+  <img id="apercu-img" alt="Image du compteur">
+  <p>Appui long sur l'image puis « Enregistrer l'image ».</p>
+  <button class="ne-share__btn" id="apercu-fermer" type="button">Fermer</button>
+</dialog>
 
 <script>
 const URL_LIVE = "https://adherent.unenouvelleenergie.fr/donnees/adherents.json";
@@ -404,7 +419,7 @@ async function preparerImage() {
 // en plus jointe directement au post.
 let lienCourant = "";
 const nouveauLien = () => (lienCourant = `${ORIGINE}/?n=${etat.total}`);
-const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie ! Rejoignez le mouvement 👉`;
+const texteTweet = () => `Nous sommes déjà ${fmt(etat.total)} adhérents à Nouvelle Énergie ! Rejoignez le mouvement #ilsepassequelquechose 👉`;
 const fichier = () => new File([imageBlob], `nouvelle-energie-${etat.total}.png`, { type: "image/png" });
 
 function telecharger() {
@@ -444,7 +459,22 @@ $("share-fb").addEventListener("click", async () => {
   open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(lienCourant), "_blank", "noopener");
 });
 
-$("share-dl").addEventListener("click", () => { if (imageBlob) telecharger(); });
+// Bouton Image : téléchargement sur ordinateur. Sur mobile le téléchargement direct est bloqué (iPhone surtout) :
+// on ouvre la feuille de partage, qui propose « Enregistrer l'image », sinon un aperçu à enregistrer par appui long.
+$("share-dl").addEventListener("click", async () => {
+  if (!imageBlob) return;
+  if (!matchMedia("(pointer: coarse)").matches) return telecharger();
+  const f = fichier();
+  if (navigator.canShare?.({ files: [f] })) {
+    try { await navigator.share({ files: [f] }); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  const img = $("apercu-img");
+  if (img.src) URL.revokeObjectURL(img.src);
+  img.src = URL.createObjectURL(imageBlob);
+  $("apercu").showModal();
+});
+$("apercu-fermer").addEventListener("click", () => $("apercu").close());
 
 rafraichir();
 setInterval(rafraichir, POLL_MS);
