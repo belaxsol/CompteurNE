@@ -2,6 +2,7 @@
 const URL_LIVE = "https://adherent.unenouvelleenergie.fr/donnees/adherents.json";
 const URL_HISTO = "https://adherent.unenouvelleenergie.fr/donnees/adherents/historique.json";
 const PAS_CAP = 5000;
+const OBJECTIF = 100000;      // au-delà : objectif suivant de 5k en 5k (105k, 110k...)
 const MOIS = ["JANV.", "FÉVR.", "MARS", "AVR.", "MAI", "JUIN", "JUIL.", "AOÛT", "SEPT.", "OCT.", "NOV.", "DÉC."];
 
 export const fmt = n => Math.round(n).toLocaleString("fr-FR").replace(/ | /g, " ");
@@ -32,7 +33,7 @@ export async function lireDonnees() {
 
   const v24 = valeurA(+maj - 24 * 3600e3, serie);
   const v7 = valeurA(+maj - 7 * 24 * 3600e3, serie);
-  const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = capBas + PAS_CAP;
+  const capBas = Math.floor(total / PAS_CAP) * PAS_CAP, capHaut = Math.max(OBJECTIF, capBas + PAS_CAP);
   const pct = total / capHaut * 100;          // part de l'objectif déjà atteinte
 
   const parties = Object.fromEntries(new Intl.DateTimeFormat("fr-FR", {

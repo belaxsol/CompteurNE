@@ -15,6 +15,7 @@ from playwright.sync_api import sync_playwright
 # --- Paramètres généraux ---
 PAS_PALIER = 25        # Alerte tous les 25 nouveaux adhérents
 PAS_CAP = 5000         # Grands caps (35k, 40k, 45k...)
+OBJECTIF = 100000      # Objectif affiché ; au-delà, objectif suivant de 5k en 5k (105k, 110k...)
 SEUIL_HEURES = 2       # Notification récurrente max
 TAILLE_BARRE = 8       # Longueur de la jauge textuelle
 
@@ -982,7 +983,7 @@ def run():
 
     if doit_notifier:
         cap_precedent = (adherents // PAS_CAP) * PAS_CAP
-        prochain_cap = cap_precedent + PAS_CAP
+        prochain_cap = max(OBJECTIF, cap_precedent + PAS_CAP)
         reste_avant_cap = prochain_cap - adherents
 
         jauge_txt = generer_jauge_texte(adherents, cap_precedent, prochain_cap, TAILLE_BARRE)
@@ -1002,7 +1003,7 @@ def run():
             f"⚡ {cadence_txt}\n"
             f"📈 +{formater_nombre(gain_24h)} (24h) · +{formater_nombre(gain_7j)} (7j)\n"
             f"{momentum_txt}\n\n"
-            f"Cap {cap_precedent // 1000}k ➔ {prochain_cap // 1000}k ({jauge_txt}) :\n"
+            f"Objectif {prochain_cap // 1000}k ({jauge_txt}) :\n"
             f"▫️ Reste : {formater_nombre(reste_avant_cap)} adhésions\n"
             f"▫️ Projection : {eta_texte}\n\n"
             f"#ilsepassequelquechose"
